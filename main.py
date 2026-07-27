@@ -5,27 +5,32 @@ import io
 import unicodedata
 
 st.set_page_config(
-    page_title="Project Dashboard 2026",
+    page_title="Project Dashboard",
     page_icon="📚",
     layout="wide"
 )
 
-# -------------------------------------------------------
+# =====================================================
 # GOOGLE SHEET DETAILS
-# -------------------------------------------------------
+# =====================================================
 
 SHEET_ID = "15qpNNgSRDENU_vDnHWwccJCC_u85EASZrV4zTWI7M00"
 SHEET_NAME = "Minor Project"
 
 sheet_name = SHEET_NAME.replace(" ", "%20")
 
-url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
+url = (
+    f"https://docs.google.com/spreadsheets/d/"
+    f"{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
+)
 
-# -------------------------------------------------------
+# =====================================================
 # LOAD DATA
-# -------------------------------------------------------
+# =====================================================
 
-try:
+@st.cache_data(ttl=60)
+def load_data():
+
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -38,222 +43,678 @@ try:
         keep_default_na=False
     )
 
-except Exception as e:
-    st.error(e)
-    st.stop()
+    # Clean column names
+    df.columns = [
+        unicodedata.normalize("NFKC", c).strip()
+        for c in df.columns
+    ]
 
-# -------------------------------------------------------
-# CLEAN COLUMN NAMES
-# -------------------------------------------------------
+    # Remove extra spaces
+    for col in df.columns:
+        df[col] = df[col].astype(str).str.strip()
 
-df.columns = [
-    unicodedata.normalize("NFKC", c).strip()
-    for c in df.columns
-]
+    return df
 
-# Remove extra spaces from all text
-for col in df.columns:
-    df[col] = df[col].astype(str).str.strip()
 
-# -------------------------------------------------------
+df = load_data()
+
+# =====================================================
 # REQUIRED COLUMNS
-# -------------------------------------------------------
+# =====================================================
 
-required = [
+required_columns = [
     "Faculty",
     "University",
+    "Language",
+    "Topic",
     "Student_1_Name",
     "Student_2_Name",
-    "Topic",
-    "Language"
+    "Reserved_On"
 ]
 
-for col in required:
-    if col not in df.columns:
-        st.error(f"Column '{col}' not found.")
-        st.write(df.columns.tolist())
-        st.stop()
+missing = [
+    c for c in required_columns
+    if c not in df.columns
+]
 
-# -------------------------------------------------------
+if missing:
+    st.error(f"Missing Columns : {missing}")
+    st.write(df.columns.tolist())
+    st.stop()
+
+# =====================================================
+# DATE COLUMN
+# =====================================================
+
+df["Reserved_On"] = pd.to_datetime(
+    df["Reserved_On"],
+    errors="coerce",
+    dayfirst=True
+)
+
+today = pd.Timestamp.now().normalize()
+
+week_start = today - pd.Timedelta(days=today.weekday())
+
+today_projects = (
+    df["Reserved_On"].dt.normalize() == today
+).sum()
+
+week_projects = (
+    df["Reserved_On"] >= week_start
+).sum()
+
+month_projects = (
+    (
+        df["Reserved_On"].dt.month == today.month
+    )
+    &
+    (
+        df["Reserved_On"].dt.year == today.year
+    )
+).sum()
+
+# =====================================================
+# SIDEBAR
+# =====================================================
+
+st.sidebar.title("📚 Project Dashboard")
+
+st.sidebar.success("Connected to Google Sheet")
+
+st.sidebar.metric(
+    "Projects",
+    len(df)
+)
+
+st.sidebar.metric(
+    "Faculty",
+    df["Faculty"].nunique()
+)
+
+st.sidebar.metric(
+    "Languages",
+    df["Language"].nunique()
+)
+
+st.sidebar.metric(
+    "Universities",
+    df["University"].nunique()
+)
+
+st.sidebar.info(
+    "Auto Refresh : 60 Seconds"
+)
+
+# =====================================================
 # TITLE
-# -------------------------------------------------------
+# =====================================================
 
-st.title("📚 Project Dashboard 2026")
+st.title("📚 Minor / Major Project Dashboard")
 
-# -------------------------------------------------------
+st.caption(
+    "Live data from Google Sheets"
+)
+
+# =====================================================
 # KPI
-# -------------------------------------------------------
+# =====================================================
 
-total_projects = len(df)
-
-total_faculty = df["Faculty"].replace("", pd.NA).dropna().nunique()
-
-total_languages = df["Language"].replace("", pd.NA).dropna().nunique()
-
-total_university = df["University"].replace("", pd.NA).dropna().nunique()
-
-student1 = df["Student_1_Name"].replace("", pd.NA).dropna().shape[0]
+student1 = (
+    df["Student_1_Name"]
+    .replace("", pd.NA)
+    .dropna()
+    .shape[0]
+)
 
 student2 = (
     df["Student_2_Name"]
-    .replace(["", "N/A", "nan"], pd.NA)
+    .replace(["", "N/A"], pd.NA)
     .dropna()
     .shape[0]
 )
 
 total_students = student1 + student2
 
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4 = st.columns(4)
 
-c1.metric("Projects", total_projects)
-c2.metric("Faculty", total_faculty)
-c3.metric("Students", total_students)
-c4.metric("Languages", total_languages)
-c5.metric("Universities", total_university)
+c1.metric(
+    "📚 Projects",
+    len(df)
+)
+
+c2.metric(
+    "👨‍🎓 Students",
+    total_students
+)
+
+c3.metric(
+    "👨‍🏫 Faculty",
+    df["Faculty"].nunique()
+)
+
+c4.metric(
+    "💻 Languages",
+    df["Language"].nunique()
+)
 
 st.divider()
 
-# -------------------------------------------------------
-# SEARCH
-# -------------------------------------------------------
+# =====================================================
+# TODAY / WEEK / MONTH
+# =====================================================
 
-search = st.text_input("🔍 Search Project")
+st.subheader("📈 Reservation Statistics")
 
-if search:
+s1, s2, s3 = st.columns(3)
 
-    result = df[
-        df["Topic"].str.contains(search, case=False, na=False)
-    ]
+s1.metric(
+    "🆕 Today",
+    today_projects
+)
 
-    st.dataframe(result, use_container_width=True)
+s2.metric(
+    "📅 This Week",
+    week_projects
+)
 
-    st.divider()
+s3.metric(
+    "🗓 This Month",
+    month_projects
+)
 
-# -------------------------------------------------------
-# TABS
-# -------------------------------------------------------
+progress = (
+    today_projects / len(df)
+    if len(df)
+    else 0
+)
+
+st.progress(progress)
+
+st.caption(
+    f"{today_projects} project(s) reserved today."
+)
+
+st.divider()
+
+# =====================================================
+# RECENT RESERVATIONS
+# =====================================================
+
+st.subheader("🕒 Recent Reservations")
+
+recent = (
+    df.sort_values(
+        "Reserved_On",
+        ascending=False
+    )
+    .head(10)
+)
+
+show_cols = [
+    "Topic",
+    "Faculty",
+    "Student_1_Name",
+    "Student_2_Name",
+    "Language",
+    "University",
+    "Reserved_On"
+]
+
+show_cols = [
+    c for c in show_cols
+    if c in recent.columns
+]
+
+st.dataframe(
+    recent[show_cols],
+    use_container_width=True,
+    hide_index=True
+)
+
+st.divider()
+# =====================================================
+# LEADERBOARDS
+# =====================================================
+
+st.header("📊 Analytics")
+
+col1, col2 = st.columns(2)
+
+with col1:
+
+    st.subheader("👨‍🏫 Faculty Leaderboard")
+
+    faculty_chart = (
+        df.groupby("Faculty")
+        .size()
+        .reset_index(name="Projects")
+        .sort_values("Projects", ascending=False)
+    )
+
+    st.bar_chart(
+        faculty_chart.set_index("Faculty")
+    )
+
+with col2:
+
+    st.subheader("💻 Language Distribution")
+
+    language_chart = (
+        df.groupby("Language")
+        .size()
+        .reset_index(name="Projects")
+        .sort_values("Projects", ascending=False)
+    )
+
+    st.bar_chart(
+        language_chart.set_index("Language")
+    )
+
+st.divider()
+
+st.subheader("🏛 University Distribution")
+
+university_chart = (
+    df.groupby("University")
+    .size()
+    .reset_index(name="Projects")
+    .sort_values("Projects", ascending=False)
+)
+
+st.bar_chart(
+    university_chart.set_index("University")
+)
+
+st.divider()
+
+# =====================================================
+# EXPANDABLE TREE VIEW
+# =====================================================
 
 tab1, tab2, tab3 = st.tabs(
     [
-        "Faculty",
-        "Language",
-        "University"
+        "👨‍🏫 Faculty",
+        "💻 Language",
+        "🏛 University"
     ]
 )
 
-# =======================================================
+# =====================================================
 # FACULTY
-# =======================================================
+# =====================================================
 
 with tab1:
 
-    st.subheader("Faculty Wise Projects")
+    st.subheader("Faculty → Project → Students")
 
-    faculty_counts = (
-        df.groupby("Faculty")
-        .size()
-        .sort_values(ascending=False)
+    faculty_list = sorted(
+        df["Faculty"]
+        .dropna()
+        .unique()
     )
 
-    for faculty, count in faculty_counts.items():
+    for faculty in faculty_list:
 
         if faculty == "":
             continue
 
-        with st.expander(f"👨‍🏫 {faculty} ({count} Projects)"):
+        faculty_df = df[
+            df["Faculty"] == faculty
+        ]
 
-            temp = df[df["Faculty"] == faculty]
+        with st.expander(
+            f"👨‍🏫 {faculty} ({len(faculty_df)})",
+            expanded=False
+        ):
 
-            for _, row in temp.iterrows():
+            faculty_df = faculty_df.sort_values("Topic")
 
-                with st.expander(f"📁 {row['Topic']}"):
+            for _, row in faculty_df.iterrows():
 
-                    st.write("### Students")
+                topic = row["Topic"]
 
-                    st.write("**Student 1:**", row["Student_1_Name"])
+                with st.expander(
+                    f"📁 {topic}"
+                ):
 
-                    if row["Student_2_Name"] not in ["", "N/A", "nan"]:
-                        st.write("**Student 2:**", row["Student_2_Name"])
-                    else:
-                        st.write("**Student 2:** N/A")
+                    st.write(
+                        "### 👨‍🎓 Students"
+                    )
 
-# =======================================================
+                    st.write(
+                        f"**Student 1 :** {row['Student_1_Name']}"
+                    )
+
+                    if (
+                        row["Student_2_Name"]
+                        not in ["", "N/A", "nan"]
+                    ):
+
+                        st.write(
+                            f"**Student 2 :** {row['Student_2_Name']}"
+                        )
+
+                    st.write("---")
+
+                    c1, c2 = st.columns(2)
+
+                    c1.write(
+                        f"**Language :** {row['Language']}"
+                    )
+
+                    c2.write(
+                        f"**University :** {row['University']}"
+                    )
+
+# =====================================================
 # LANGUAGE
-# =======================================================
+# =====================================================
 
 with tab2:
 
-    st.subheader("Language Wise Projects")
+    st.subheader("Language → Project → Students")
 
-    language_counts = (
-        df.groupby("Language")
-        .size()
-        .sort_values(ascending=False)
+    language_list = sorted(
+        df["Language"]
+        .dropna()
+        .unique()
     )
 
-    for language, count in language_counts.items():
+    for language in language_list:
 
         if language == "":
             continue
 
-        with st.expander(f"💻 {language} ({count} Projects)"):
+        language_df = df[
+            df["Language"] == language
+        ]
 
-            temp = df[df["Language"] == language]
+        with st.expander(
+            f"💻 {language} ({len(language_df)})"
+        ):
 
-            for _, row in temp.iterrows():
+            language_df = language_df.sort_values("Topic")
 
-                with st.expander(f"📁 {row['Topic']}"):
+            for _, row in language_df.iterrows():
 
-                    st.write("**Student 1:**", row["Student_1_Name"])
+                with st.expander(
+                    f"📁 {row['Topic']}"
+                ):
 
-                    if row["Student_2_Name"] not in ["", "N/A", "nan"]:
-                        st.write("**Student 2:**", row["Student_2_Name"])
-                    else:
-                        st.write("**Student 2:** N/A")
+                    st.write(
+                        f"**Student 1 :** {row['Student_1_Name']}"
+                    )
 
-# =======================================================
+                    if (
+                        row["Student_2_Name"]
+                        not in ["", "N/A", "nan"]
+                    ):
+
+                        st.write(
+                            f"**Student 2 :** {row['Student_2_Name']}"
+                        )
+
+                    st.write("---")
+
+                    st.write(
+                        f"**Faculty :** {row['Faculty']}"
+                    )
+
+                    st.write(
+                        f"**University :** {row['University']}"
+                    )
+
+# =====================================================
 # UNIVERSITY
-# =======================================================
+# =====================================================
 
 with tab3:
 
-    st.subheader("University Wise Projects")
+    st.subheader("University → Project → Students")
 
-    university_counts = (
-        df.groupby("University")
-        .size()
-        .sort_values(ascending=False)
+    university_list = sorted(
+        df["University"]
+        .dropna()
+        .unique()
     )
 
-    for university, count in university_counts.items():
+    for university in university_list:
 
         if university == "":
             continue
 
-        with st.expander(f"🏛️ {university} ({count} Projects)"):
+        university_df = df[
+            df["University"] == university
+        ]
 
-            temp = df[df["University"] == university]
+        with st.expander(
+            f"🏛 {university} ({len(university_df)})"
+        ):
 
-            for _, row in temp.iterrows():
+            university_df = university_df.sort_values("Topic")
 
-                with st.expander(f"📁 {row['Topic']}"):
+            for _, row in university_df.iterrows():
 
-                    st.write("**Student 1:**", row["Student_1_Name"])
+                with st.expander(
+                    f"📁 {row['Topic']}"
+                ):
 
-                    if row["Student_2_Name"] not in ["", "N/A", "nan"]:
-                        st.write("**Student 2:**", row["Student_2_Name"])
-                    else:
-                        st.write("**Student 2:** N/A")
+                    st.write(
+                        f"**Student 1 :** {row['Student_1_Name']}"
+                    )
 
-# -------------------------------------------------------
-# DOWNLOAD
-# -------------------------------------------------------
+                    if (
+                        row["Student_2_Name"]
+                        not in ["", "N/A", "nan"]
+                    ):
+
+                        st.write(
+                            f"**Student 2 :** {row['Student_2_Name']}"
+                        )
+
+                    st.write("---")
+
+                    st.write(
+                        f"**Faculty :** {row['Faculty']}"
+                    )
+
+                    st.write(
+                        f"**Language :** {row['Language']}"
+                    )
+
+st.divider()
+# =====================================================
+# SEARCH
+# =====================================================
+
+st.header("🔍 Search")
+
+search = st.text_input(
+    "Search by Project, Student, Faculty, Language or University"
+)
+
+if search.strip():
+
+    mask = (
+        df["Topic"].str.contains(search, case=False, na=False)
+        |
+        df["Student_1_Name"].str.contains(search, case=False, na=False)
+        |
+        df["Student_2_Name"].str.contains(search, case=False, na=False)
+        |
+        df["Faculty"].str.contains(search, case=False, na=False)
+        |
+        df["Language"].str.contains(search, case=False, na=False)
+        |
+        df["University"].str.contains(search, case=False, na=False)
+    )
+
+    result = df[mask]
+
+    if len(result):
+
+        st.success(f"{len(result)} Result(s) Found")
+
+        display = result.drop(
+            columns=[
+                "Student_1_Number",
+                "Student_2_Number"
+            ],
+            errors="ignore"
+        )
+
+        st.dataframe(
+            display,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    else:
+
+        st.warning("No matching records found.")
 
 st.divider()
 
+# =====================================================
+# SIDEBAR FILTERS
+# =====================================================
+
+st.sidebar.header("Filters")
+
+faculty_filter = st.sidebar.selectbox(
+    "Faculty",
+    ["All"] + sorted(df["Faculty"].unique().tolist())
+)
+
+language_filter = st.sidebar.selectbox(
+    "Language",
+    ["All"] + sorted(df["Language"].unique().tolist())
+)
+
+university_filter = st.sidebar.selectbox(
+    "University",
+    ["All"] + sorted(df["University"].unique().tolist())
+)
+
+filtered = df.copy()
+
+if faculty_filter != "All":
+    filtered = filtered[
+        filtered["Faculty"] == faculty_filter
+    ]
+
+if language_filter != "All":
+    filtered = filtered[
+        filtered["Language"] == language_filter
+    ]
+
+if university_filter != "All":
+    filtered = filtered[
+        filtered["University"] == university_filter
+    ]
+
+st.header("📋 Filtered Projects")
+
+display = filtered.drop(
+    columns=[
+        "Student_1_Number",
+        "Student_2_Number"
+    ],
+    errors="ignore"
+)
+
+st.dataframe(
+    display,
+    use_container_width=True,
+    hide_index=True
+)
+
+st.divider()
+
+# =====================================================
+# DOWNLOAD CSV
+# =====================================================
+
+download_df = df.drop(
+    columns=[
+        "Student_1_Number",
+        "Student_2_Number"
+    ],
+    errors="ignore"
+)
+
 st.download_button(
-    "⬇ Download CSV",
-    data=df.to_csv(index=False),
-    file_name="Projects.csv",
+    label="⬇ Download Project List (CSV)",
+    data=download_df.to_csv(index=False),
+    file_name="MCMT_Project_List.csv",
     mime="text/csv"
+)
+
+st.caption(
+    "Phone numbers are intentionally excluded from the downloaded file."
+)
+
+st.divider()
+
+# =====================================================
+# MANUAL REFRESH
+# =====================================================
+
+col1, col2 = st.columns([1, 4])
+
+with col1:
+
+    if st.button("🔄 Refresh"):
+
+        st.cache_data.clear()
+        st.rerun()
+
+with col2:
+
+    st.info(
+        "Dashboard automatically refreshes every 60 seconds (cached). "
+        "Click Refresh to load the latest data immediately."
+    )
+
+st.divider()
+
+# =====================================================
+# DASHBOARD SUMMARY
+# =====================================================
+
+st.header("📈 Dashboard Summary")
+
+summary1, summary2, summary3 = st.columns(3)
+
+summary1.metric(
+    "Projects",
+    len(df)
+)
+
+summary2.metric(
+    "Faculty",
+    df["Faculty"].nunique()
+)
+
+summary3.metric(
+    "Students",
+    total_students
+)
+
+st.divider()
+
+# =====================================================
+# FOOTER
+# =====================================================
+
+st.markdown("---")
+
+st.caption(
+    "© 2026 Microtek College of Management & Technology | "
+    "Department of Computer Science"
+)
+
+st.caption(
+    "Developed by HOD CS | Project Monitoring Dashboard"
 )
