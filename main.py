@@ -349,54 +349,6 @@ with col3:
 st.divider()
 
 # =====================================================
-# DATA
-# =====================================================
-
-faculty_chart = (
-    df.groupby("Faculty")
-      .size()
-      .sort_values(ascending=False)
-)
-
-language_chart = (
-    df.groupby("Language")
-      .size()
-      .sort_values(ascending=False)
-)
-
-university_chart = (
-    df.groupby("University")
-      .size()
-      .sort_values(ascending=False)
-)
-
-# =====================================================
-# DISPLAY
-# =====================================================
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    draw_pie_chart(
-        faculty_chart,
-        "👨‍🏫 Faculty"
-    )
-
-with col2:
-    draw_pie_chart(
-        language_chart,
-        "💻 Language"
-    )
-
-with col3:
-    draw_pie_chart(
-        university_chart,
-        "🏛 University"
-    )
-
-st.divider()
-
-# =====================================================
 # EXPANDABLE TREE VIEW
 # =====================================================
 
