@@ -273,29 +273,44 @@ st.dataframe(
 )
 
 st.divider()
+
 # =====================================================
-# LEADERBOARDS
+# ANALYTICS 
 # =====================================================
 
 st.header("📊 Analytics")
 
 col1, col2 = st.columns(2)
 
+# -------------------------
+# Faculty Pie Chart
+# -------------------------
 with col1:
 
-    st.subheader("👨‍🏫 Faculty Leaderboard")
+    st.subheader("👨‍🏫 Faculty Distribution")
 
     faculty_chart = (
         df.groupby("Faculty")
         .size()
-        .reset_index(name="Projects")
-        .sort_values("Projects", ascending=False)
+        .sort_values(ascending=False)
     )
 
-    st.bar_chart(
-        faculty_chart.set_index("Faculty")
+    fig, ax = plt.subplots(figsize=(6,6))
+
+    ax.pie(
+        faculty_chart.values,
+        labels=faculty_chart.index,
+        autopct="%1.1f%%",
+        startangle=90
     )
 
+    ax.axis("equal")
+
+    st.pyplot(fig)
+
+# -------------------------
+# Language Pie Chart
+# -------------------------
 with col2:
 
     st.subheader("💻 Language Distribution")
@@ -303,28 +318,48 @@ with col2:
     language_chart = (
         df.groupby("Language")
         .size()
-        .reset_index(name="Projects")
-        .sort_values("Projects", ascending=False)
+        .sort_values(ascending=False)
     )
 
-    st.bar_chart(
-        language_chart.set_index("Language")
+    fig, ax = plt.subplots(figsize=(6,6))
+
+    ax.pie(
+        language_chart.values,
+        labels=language_chart.index,
+        autopct="%1.1f%%",
+        startangle=90
     )
+
+    ax.axis("equal")
+
+    st.pyplot(fig)
 
 st.divider()
+
+# -------------------------
+# University Pie Chart
+# -------------------------
 
 st.subheader("🏛 University Distribution")
 
 university_chart = (
     df.groupby("University")
     .size()
-    .reset_index(name="Projects")
-    .sort_values("Projects", ascending=False)
+    .sort_values(ascending=False)
 )
 
-st.bar_chart(
-    university_chart.set_index("University")
+fig, ax = plt.subplots(figsize=(7,7))
+
+ax.pie(
+    university_chart.values,
+    labels=university_chart.index,
+    autopct="%1.1f%%",
+    startangle=90
 )
+
+ax.axis("equal")
+
+st.pyplot(fig)
 
 st.divider()
 
