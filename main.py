@@ -274,8 +274,7 @@ def draw_pie_chart(data, title):
         labeldistance=1.08,
         pctdistance=0.65,
         textprops={
-            "fontsize":8,
-            "fontweight":"bold"
+            "fontsize":7
         },
         wedgeprops={
             "edgecolor":"white",
@@ -331,19 +330,19 @@ col1, col2, col3 = st.columns(3)
 with col1:
     draw_pie_chart(
         faculty_chart,
-        "👨‍🏫 Faculty Distribution"
+        "👨‍🏫 Faculty"
     )
 
 with col2:
     draw_pie_chart(
         language_chart,
-        "💻 Language Distribution"
+        "💻 Language"
     )
 
 with col3:
     draw_pie_chart(
         university_chart,
-        "🏛 University Distribution"
+        "🏛 University"
     )
 
 st.divider()
