@@ -281,14 +281,14 @@ st.divider()
 
 st.header("📊 Analytics")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
-# -------------------------
-# Faculty Pie Chart
-# -------------------------
+# ==========================
+# Faculty Distribution
+# ==========================
 with col1:
 
-    st.subheader("👨‍🏫 Faculty Distribution")
+    st.subheader("👨‍🏫 Faculty")
 
     faculty_chart = (
         df.groupby("Faculty")
@@ -296,25 +296,30 @@ with col1:
         .sort_values(ascending=False)
     )
 
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(4,4))
 
     ax.pie(
-        faculty_chart.values,
+        faculty_chart,
         labels=faculty_chart.index,
         autopct="%1.1f%%",
-        startangle=90
+        startangle=90,
+        textprops={"fontsize":8},
+        pctdistance=0.75
     )
 
     ax.axis("equal")
 
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
 
-# -------------------------
-# Language Pie Chart
-# -------------------------
+    plt.close(fig)
+
+
+# ==========================
+# Language Distribution
+# ==========================
 with col2:
 
-    st.subheader("💻 Language Distribution")
+    st.subheader("💻 Language")
 
     language_chart = (
         df.groupby("Language")
@@ -322,45 +327,53 @@ with col2:
         .sort_values(ascending=False)
     )
 
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(4,4))
 
     ax.pie(
-        language_chart.values,
+        language_chart,
         labels=language_chart.index,
         autopct="%1.1f%%",
-        startangle=90
+        startangle=90,
+        textprops={"fontsize":8},
+        pctdistance=0.75
     )
 
     ax.axis("equal")
 
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
 
-st.divider()
+    plt.close(fig)
 
-# -------------------------
-# University Pie Chart
-# -------------------------
 
-st.subheader("🏛 University Distribution")
+# ==========================
+# University Distribution
+# ==========================
+with col3:
 
-university_chart = (
-    df.groupby("University")
-    .size()
-    .sort_values(ascending=False)
-)
+    st.subheader("🏛 University")
 
-fig, ax = plt.subplots(figsize=(7,7))
+    university_chart = (
+        df.groupby("University")
+        .size()
+        .sort_values(ascending=False)
+    )
 
-ax.pie(
-    university_chart.values,
-    labels=university_chart.index,
-    autopct="%1.1f%%",
-    startangle=90
-)
+    fig, ax = plt.subplots(figsize=(4,4))
 
-ax.axis("equal")
+    ax.pie(
+        university_chart,
+        labels=university_chart.index,
+        autopct="%1.1f%%",
+        startangle=90,
+        textprops={"fontsize":8},
+        pctdistance=0.75
+    )
 
-st.pyplot(fig)
+    ax.axis("equal")
+
+    st.pyplot(fig, use_container_width=True)
+
+    plt.close(fig)
 
 st.divider()
 
