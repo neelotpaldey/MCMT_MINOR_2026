@@ -245,12 +245,22 @@ st.dataframe(
 st.divider()
 
 # =====================================================
-# ANALYTICS 
+# ANALYTICS
 # =====================================================
 
 st.header("📊 Analytics")
 
 
+# ---------- Function to show Count + Percentage ----------
+def make_autopct(values):
+    def my_autopct(pct):
+        total = sum(values)
+        count = int(round(pct * total / 100.0))
+        return f"{count}\n({pct:.1f}%)"
+    return my_autopct
+
+
+# ---------- Pie Chart Function ----------
 def draw_pie_chart(data, title):
 
     fig, ax = plt.subplots(figsize=(4, 4))
@@ -258,21 +268,24 @@ def draw_pie_chart(data, title):
     ax.pie(
         data.values,
         labels=data.index,
-        autopct="%1.1f%%",
+        autopct=make_autopct(data.values),
         startangle=90,
         radius=0.85,
         labeldistance=1.08,
-        pctdistance=0.70,
-        textprops={"fontsize":8},
+        pctdistance=0.65,
+        textprops={
+            "fontsize":8,
+            "fontweight":"bold"
+        },
         wedgeprops={
-            "edgecolor": "white",
-            "linewidth": 1
+            "edgecolor":"white",
+            "linewidth":1
         }
     )
 
     ax.set_title(
         title,
-        fontsize=12,
+        fontsize=13,
         fontweight="bold",
         pad=12
     )
@@ -285,6 +298,55 @@ def draw_pie_chart(data, title):
 
     plt.close(fig)
 
+
+# =====================================================
+# PREPARE DATA
+# =====================================================
+
+faculty_chart = (
+    df.groupby("Faculty")
+      .size()
+      .sort_values(ascending=False)
+)
+
+language_chart = (
+    df.groupby("Language")
+      .size()
+      .sort_values(ascending=False)
+)
+
+university_chart = (
+    df.groupby("University")
+      .size()
+      .sort_values(ascending=False)
+)
+
+
+# =====================================================
+# DISPLAY CHARTS
+# =====================================================
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    draw_pie_chart(
+        faculty_chart,
+        "👨‍🏫 Faculty Distribution"
+    )
+
+with col2:
+    draw_pie_chart(
+        language_chart,
+        "💻 Language Distribution"
+    )
+
+with col3:
+    draw_pie_chart(
+        university_chart,
+        "🏛 University Distribution"
+    )
+
+st.divider()
 
 # =====================================================
 # DATA
