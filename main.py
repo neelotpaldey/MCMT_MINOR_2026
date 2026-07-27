@@ -583,62 +583,6 @@ if search.strip():
 st.divider()
 
 # =====================================================
-# SIDEBAR FILTERS
-# =====================================================
-
-st.sidebar.header("Filters")
-
-faculty_filter = st.sidebar.selectbox(
-    "Faculty",
-    ["All"] + sorted(df["Faculty"].unique().tolist())
-)
-
-language_filter = st.sidebar.selectbox(
-    "Language",
-    ["All"] + sorted(df["Language"].unique().tolist())
-)
-
-university_filter = st.sidebar.selectbox(
-    "University",
-    ["All"] + sorted(df["University"].unique().tolist())
-)
-
-filtered = df.copy()
-
-if faculty_filter != "All":
-    filtered = filtered[
-        filtered["Faculty"] == faculty_filter
-    ]
-
-if language_filter != "All":
-    filtered = filtered[
-        filtered["Language"] == language_filter
-    ]
-
-if university_filter != "All":
-    filtered = filtered[
-        filtered["University"] == university_filter
-    ]
-
-st.header("📋 Filtered Projects")
-
-display = filtered.drop(
-    columns=[
-        "Student_1_Number",
-        "Student_2_Number"
-    ],
-    errors="ignore"
-)
-
-st.dataframe(
-    display,
-    use_container_width=True,
-    hide_index=True
-)
-
-st.divider()
-
-# =====================================================
 # DOWNLOAD CSV
 # =====================================================
 
