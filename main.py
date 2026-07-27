@@ -115,43 +115,12 @@ month_projects = (
     )
 ).sum()
 
-# =====================================================
-# SIDEBAR
-# =====================================================
-
-st.sidebar.title("📚 Project Dashboard")
-
-st.sidebar.success("Connected to Google Sheet")
-
-st.sidebar.metric(
-    "Projects",
-    len(df)
-)
-
-st.sidebar.metric(
-    "Faculty",
-    df["Faculty"].nunique()
-)
-
-st.sidebar.metric(
-    "Languages",
-    df["Language"].nunique()
-)
-
-st.sidebar.metric(
-    "Universities",
-    df["University"].nunique()
-)
-
-st.sidebar.info(
-    "Auto Refresh : 60 Seconds"
-)
 
 # =====================================================
 # TITLE
 # =====================================================
 
-st.title("📚 Minor / Major Project Dashboard")
+st.title("📚 Minor Project Dashboard 2026")
 
 st.caption(
     "Live data from Google Sheets"
