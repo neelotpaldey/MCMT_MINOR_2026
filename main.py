@@ -397,14 +397,14 @@ with tab1:
 # Status
 # ----------------------------
         if vbspu_count >= MAX_PROJECTS:
-            vbspu_status = "✅ Reserved"
+            vbspu_status = "        ✅ Reserved"
         else:
-            vbspu_status = f"🟢 {vbspu_count}/{MAX_PROJECTS} Available"
+            vbspu_status = f"       🟢 {vbspu_count}/{MAX_PROJECTS} Available"
 
         if mgkvp_count >= MAX_PROJECTS:
             mgkvp_status = "✅ Reserved"
         else:
-            mgkvp_status = f"🟢 {mgkvp_count}/{MAX_PROJECTS} Available"
+            mgkvp_status = f"       🟢 {mgkvp_count}/{MAX_PROJECTS} Available"
 
         # ----------------------------
         # Faculty Expander
