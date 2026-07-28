@@ -14,8 +14,7 @@ st.set_page_config(
 # =====================================================
 # GOOGLE SHEET DETAILS
 # =====================================================
-
-SHEET_ID = "15qpNNgSRDENU_vDnHWwccJCC_u85EASZrV4zTWI7M00"
+SHEET_ID = "15I6HYYZhIKJaBdp3PU6_eimLuOcPj3BN3-fgy_3WwTA"
 SHEET_NAME = "Minor Project"
 
 sheet_name = SHEET_NAME.replace(" ", "%20")
