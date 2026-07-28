@@ -364,126 +364,150 @@ tab1, tab2, tab3 = st.tabs(
 # =====================================================
 
 with tab1:
-
     st.subheader("Faculty → Project → Students")
-
+    MAX_PROJECTS = 10
     faculty_list = sorted(
         df["Faculty"]
         .dropna()
         .unique()
     )
-
     for faculty in faculty_list:
-
         if faculty == "":
             continue
-
         faculty_df = df[
             df["Faculty"] == faculty
         ]
+# ----------------------------
+# Count University-wise
+# ----------------------------
+        vbspu_df = faculty_df[
+            faculty_df["University"]
+            .str.upper()
+            .str.contains("VBSPU", na=False)
+        ]
+        mgkvp_df = faculty_df[
+            faculty_df["University"]
+            .str.upper()
+            .str.contains("MGKVP", na=False)
+        ]
+        vbspu_count = len(vbspu_df)
+        mgkvp_count = len(mgkvp_df)
+
+# ----------------------------
+# Status
+# ----------------------------
+        if vbspu_count >= MAX_PROJECTS:
+            vbspu_status = "✅ Reserved"
+        else:
+            vbspu_status = f"🟢 {vbspu_count}/{MAX_PROJECTS} Available"
+
+        if mgkvp_count >= MAX_PROJECTS:
+            mgkvp_status = "✅ Reserved"
+        else:
+            mgkvp_status = f"🟢 {mgkvp_count}/{MAX_PROJECTS} Available"
+
+        # ----------------------------
+        # Faculty Expander
+        # ----------------------------
 
         with st.expander(
-            f"👨‍🏫 {faculty} ({len(faculty_df)})",
+            f"👨‍🏫 {faculty}"
+            f" | VBSPU : {vbspu_status}"
+            f" | MGKVP : {mgkvp_status}",
             expanded=False
         ):
-
-            faculty_df = faculty_df.sort_values("Topic")
-
+            faculty_df = faculty_df.sort_values(
+                ["University", "Topic"]
+            )
+            current_university = ""
             for _, row in faculty_df.iterrows():
-
-                topic = row["Topic"]
+                # -----------------------------------
+                # University Heading
+                # -----------------------------------
+                if row["University"] != current_university:
+                    current_university = row["University"]
+                    st.markdown(
+                        f"## 🏛 {current_university}"
+                    )
+                # -----------------------------------
+                # Project
+                # -----------------------------------
 
                 with st.expander(
-                    f"📁 {topic}"
+                    f"📁 {row['Topic']}"
                 ):
-
-                    st.write(
-                        "### 👨‍🎓 Students"
-                    )
-
-                    st.write(
-                        f"**Student 1 :** {row['Student_1_Name']}"
-                    )
-
-                    if (
-                        row["Student_2_Name"]
-                        not in ["", "N/A", "nan"]
-                    ):
-
-                        st.write(
-                            f"**Student 2 :** {row['Student_2_Name']}"
-                        )
-
-                    st.write("---")
-
                     c1, c2 = st.columns(2)
-
-                    c1.write(
-                        f"**Language :** {row['Language']}"
-                    )
-
-                    c2.write(
-                        f"**University :** {row['University']}"
-                    )
-
+                    with c1:
+                        st.write(
+                            "**Student 1**"
+                        )
+                        st.success(
+                            row["Student_1_Name"]
+                        )
+                    with c2:
+                        st.write(
+                            "**Student 2**"
+                        )
+                        if row["Student_2_Name"] not in ["", "N/A", "nan"]:
+                            st.success(
+                                row["Student_2_Name"]
+                            )
+                        else:
+                            st.info(
+                                "Not Assigned"
+                            )
+                    st.divider()
+                    info1, info2 = st.columns(2)
+                    with info1:
+                        st.write(
+                            f"**Language :** {row['Language']}"
+                        )
+                    with info2:
+                        st.write(
+                            f"**University :** {row['University']}"
+                        )
 # =====================================================
 # LANGUAGE
 # =====================================================
 
 with tab2:
-
     st.subheader("Language → Project → Students")
-
     language_list = sorted(
         df["Language"]
         .dropna()
         .unique()
     )
-
     for language in language_list:
-
         if language == "":
             continue
-
         language_df = df[
             df["Language"] == language
         ]
-
         with st.expander(
             f"💻 {language} ({len(language_df)})"
         ):
-
             language_df = language_df.sort_values("Topic")
-
             for _, row in language_df.iterrows():
-
                 with st.expander(
                     f"📁 {row['Topic']}"
                 ):
-
                     st.write(
                         f"**Student 1 :** {row['Student_1_Name']}"
                     )
-
                     if (
                         row["Student_2_Name"]
                         not in ["", "N/A", "nan"]
                     ):
-
                         st.write(
                             f"**Student 2 :** {row['Student_2_Name']}"
                         )
-
                     st.write("---")
-
                     st.write(
                         f"**Faculty :** {row['Faculty']}"
                     )
-
                     st.write(
                         f"**University :** {row['University']}"
                     )
-
 # =====================================================
 # UNIVERSITY
 # =====================================================
@@ -499,62 +523,45 @@ with tab3:
     )
 
     for university in university_list:
-
         if university == "":
             continue
-
         university_df = df[
             df["University"] == university
         ]
-
         with st.expander(
             f"🏛 {university} ({len(university_df)})"
         ):
-
             university_df = university_df.sort_values("Topic")
-
             for _, row in university_df.iterrows():
-
                 with st.expander(
                     f"📁 {row['Topic']}"
                 ):
-
                     st.write(
                         f"**Student 1 :** {row['Student_1_Name']}"
                     )
-
                     if (
                         row["Student_2_Name"]
                         not in ["", "N/A", "nan"]
                     ):
-
                         st.write(
                             f"**Student 2 :** {row['Student_2_Name']}"
                         )
-
                     st.write("---")
-
                     st.write(
                         f"**Faculty :** {row['Faculty']}"
                     )
-
                     st.write(
                         f"**Language :** {row['Language']}"
                     )
-
 st.divider()
 # =====================================================
 # SEARCH
 # =====================================================
-
 st.header("🔍 Search")
-
 search = st.text_input(
     "Search by Project, Student, Faculty, Language or University"
 )
-
 if search.strip():
-
     mask = (
         df["Topic"].str.contains(search, case=False, na=False)
         |
@@ -568,13 +575,9 @@ if search.strip():
         |
         df["University"].str.contains(search, case=False, na=False)
     )
-
     result = df[mask]
-
     if len(result):
-
         st.success(f"{len(result)} Result(s) Found")
-
         display = result.drop(
             columns=[
                 "Student_1_Number",
@@ -582,17 +585,13 @@ if search.strip():
             ],
             errors="ignore"
         )
-
         st.dataframe(
             display,
             use_container_width=True,
             hide_index=True
         )
-
     else:
-
         st.warning("No matching records found.")
-
 st.divider()
 
 # =====================================================
