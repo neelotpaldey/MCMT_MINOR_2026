@@ -676,28 +676,6 @@ st.caption(
 st.divider()
 
 # =====================================================
-# MANUAL REFRESH
-# =====================================================
-
-col1, col2 = st.columns([1, 4])
-
-with col1:
-
-    if st.button("🔄 Refresh"):
-
-        st.cache_data.clear()
-        st.rerun()
-
-with col2:
-
-    st.info(
-        "Dashboard automatically refreshes every 60 seconds (cached). "
-        "Click Refresh to load the latest data immediately."
-    )
-
-st.divider()
-
-# =====================================================
 # FOOTER
 # =====================================================
 
