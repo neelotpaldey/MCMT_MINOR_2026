@@ -698,31 +698,6 @@ with col2:
 st.divider()
 
 # =====================================================
-# DASHBOARD SUMMARY
-# =====================================================
-
-st.header("📈 Dashboard Summary")
-
-summary1, summary2, summary3 = st.columns(3)
-
-summary1.metric(
-    "Projects",
-    len(df)
-)
-
-summary2.metric(
-    "Faculty",
-    df["Faculty"].nunique()
-)
-
-summary3.metric(
-    "Students",
-    total_students
-)
-
-st.divider()
-
-# =====================================================
 # FOOTER
 # =====================================================
 
