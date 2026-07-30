@@ -170,39 +170,96 @@ c4.metric(
 st.divider()
 
 # =====================================================
-# TODAY / WEEK / MONTH
+# RESERVATION STATISTICS
 # =====================================================
 
 st.subheader("📈 Reservation Statistics")
 
-s1, s2, s3 = st.columns(3)
+today = pd.Timestamp.now().normalize()
 
-s1.metric(
-    "🆕 Today",
-    today_projects
+yesterday = today - pd.Timedelta(days=1)
+
+week_start = today - pd.Timedelta(days=today.weekday())
+
+month_start = today.replace(day=1)
+
+# Current counts
+today_projects = (
+    df["Reserved_On"].dt.normalize() == today
+).sum()
+
+yesterday_projects = (
+    df["Reserved_On"].dt.normalize() == yesterday
+).sum()
+
+week_projects = (
+    df["Reserved_On"] >= week_start
+).sum()
+
+month_projects = (
+    (df["Reserved_On"].dt.month == today.month)
+    &
+    (df["Reserved_On"].dt.year == today.year)
+).sum()
+
+# Previous counts
+last_week_start = week_start - pd.Timedelta(days=7)
+
+last_week_end = week_start
+
+last_week_projects = (
+    (
+        df["Reserved_On"] >= last_week_start
+    )
+    &
+    (
+        df["Reserved_On"] < last_week_end
+    )
+).sum()
+
+previous_month = (
+    month_start - pd.DateOffset(days=1)
 )
 
-s2.metric(
-    "📅 This Week",
-    week_projects
-)
+last_month_projects = (
+    (
+        df["Reserved_On"].dt.month == previous_month.month
+    )
+    &
+    (
+        df["Reserved_On"].dt.year == previous_month.year
+    )
+).sum()
 
-s3.metric(
-    "🗓 This Month",
-    month_projects
-)
+# Metrics
+c1, c2, c3, c4 = st.columns(4)
 
-progress = (
-    today_projects / len(df)
-    if len(df)
-    else 0
-)
+with c1:
+    st.metric(
+        "🆕 Today",
+        today_projects,
+        delta=today_projects - yesterday_projects
+    )
 
-st.progress(progress)
+with c2:
+    st.metric(
+        "📅 Yesterday",
+        yesterday_projects
+    )
 
-st.caption(
-    f"{today_projects} project(s) reserved today."
-)
+with c3:
+    st.metric(
+        "📆 This Week",
+        week_projects,
+        delta=week_projects - last_week_projects
+    )
+
+with c4:
+    st.metric(
+        "🗓 This Month",
+        month_projects,
+        delta=month_projects - last_month_projects
+    )
 
 st.divider()
 
