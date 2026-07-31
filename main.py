@@ -499,7 +499,7 @@ with tab1:
             vbspu_status = f"       🟢 {vbspu_count}/{MAX_PROJECTS} Available"
 
         if mgkvp_count >= MAX_PROJECTS:
-            mgkvp_status = "✅ Reserved"
+            mgkvp_status = "        ✅ Reserved"
         else:
             mgkvp_status = f"       🟢 {mgkvp_count}/{MAX_PROJECTS} Available"
 
