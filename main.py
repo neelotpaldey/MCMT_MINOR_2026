@@ -115,14 +115,36 @@ month_projects = (
 ).sum()
 
 # =====================================================
+# UNIVERSITY STUDENT COUNT
+# =====================================================
+
+MGKVP_TOTAL = 96
+VBSPU_TOTAL = 95
+
+mgkvp_df = df[
+    df["University"].str.upper().str.contains("MGKVP", na=False)
+]
+
+vbspu_df = df[
+    df["University"].str.upper().str.contains("VBSPU", na=False)
+]
+
+mgkvp_students = (
+    mgkvp_df["Student_1_Name"].replace(["", "N/A"], pd.NA).dropna().count()
+    +
+    mgkvp_df["Student_2_Name"].replace(["", "N/A"], pd.NA).dropna().count()
+)
+
+vbspu_students = (
+    vbspu_df["Student_1_Name"].replace(["", "N/A"], pd.NA).dropna().count()
+    +
+    vbspu_df["Student_2_Name"].replace(["", "N/A"], pd.NA).dropna().count()
+)
+# =====================================================
 # TITLE
 # =====================================================
 
 st.title("📚 Minor Project Dashboard 2026")
-
-st.caption(
-    "Live data from Google Sheets"
-)
 
 # =====================================================
 # KPI
@@ -157,15 +179,14 @@ c2.metric(
 )
 
 c3.metric(
-    "👨‍🏫 Faculty",
-    df["Faculty"].nunique()
+    "🏛 MGKVP Students",
+    f"{mgkvp_students}/{MGKVP_TOTAL}"
 )
 
 c4.metric(
-    "💻 Languages",
-    df["Language"].nunique()
+    "🏛 VBSPU Students",
+    f"{vbspu_students}/{VBSPU_TOTAL}"
 )
-
 st.divider()
 
 # =====================================================
@@ -687,10 +708,6 @@ st.download_button(
     data=download_df.to_csv(index=False),
     file_name="MCMT_Project_List.csv",
     mime="text/csv"
-)
-
-st.caption(
-    "Phone numbers are intentionally excluded from the downloaded file."
 )
 
 st.divider()
